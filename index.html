@@ -2,29 +2,29 @@
 <html>
 <head>
 	<meta charset="utf-8">
-	<title>ckixd - Cholera</title>
+	<title>Data visualization</title>
 	<link type="text/css" rel="stylesheet" href="cholera.css"/>
 	<script type="text/javascript" src="https://d3js.org/d3.v3.min.js"></script>
 	<style>
 		svg .street {
-			stroke: gray;
+			stroke: #7B7D7E;
 			stroke-width: 1px;
 			fill: none;
 		}
 		
 		svg .mapLabel {
 			font-family: sans-serif;
-			fill: gray;
+			fill: #7B7D7E;
 		}
 		
 		svg .pump {
-			fill: black;
+			fill: #5279C5;
 			stroke: none;
 		}
 		
 		svg .death {
-			stroke: none;
-			r: 2;
+			stroke: white;
+			r: 5;
 		}
 		
 		svg .graphline {
@@ -43,7 +43,7 @@
 		}
 		
 		svg .graphbuttonlabel {
-			font-family: 'Arial';
+			font-family: 'Helvetica';
 			font-size: 15px;
 		}
 		
@@ -64,24 +64,22 @@
 </head>
 <body>
 	<div>
-		<div class="pagetitle" style="float: left;">Cholera Outbreak: London, 1854</div>
-		<div style="float: right;">
-			<form>
-				<input class="pagebutton" type="button" value="About"
-				onclick="window.location.href='about.html'" />
-			</form>
-		</div>
+		<div class="pagetitle" style="">London's 1854 Cholera Epidemic</div>
 		<br/><br/>
 		<div class="pagetext">
 			<p>
-			In 1854, an outbreak of cholera in the Soho district of London killed 616 people. Physician John Snow theorized that the disease was related to contaminated water. He created a map that showed where the deaths occurred in relation to water pumps in the area (the black diamonds), and showed they were strongly correlated with a water pump on Broad Street. This data visualization is inspired by his work. <a href="https://youtu.be/_QCHMj1vbjE">Click here to see a video demonstration of the visualization.</a>
+				The Broad Street cholera outbreak was a severe outbreak of cholera that occurred in 1854 near Broad Street in Soho, London, England, and occurred during the 1846–1860 cholera pandemic happening worldwide. This outbreak, which killed 616 people, is best known for the physician John Snow's study of its causes and his hypothesis that germ-contaminated water was the source of cholera, rather than particles in the air </a>
 			</p>
 		</div>
-		<svg id="map" width="49%" viewBox="0 0 500 500">
-		</svg>
-		<svg id="graph" width="49%" viewBox="0 0 500 500">
-			<text id='label' x='5' y='20'>Deaths per day</text>
-		</svg>
+		<div class="pagetext">
+			
+			<span class="rotated" >
+				<text id='label' x='5' y='20'>Deaths per day</text>
+			</span>
+			<svg id="graph" width="40%" viewBox="0 0 500 570" padding-right="40px"></svg>
+			<svg id="map" width="40%" viewBox="0 0 500 600" padding-top="-20px"></svg>
+		</div>
+		
 	</div>
 
 	
@@ -96,7 +94,9 @@
 		let mapYScale = d3.scale.linear();
 		
 		let buttonHeight = 30;
-		let buttonPadding = 10;
+		let buttonPadding = 40;
+
+		let filterPadding = 20;
 		
 		let graph = d3.select("svg#graph");
 		let graphWidth = SIZE;
@@ -113,34 +113,34 @@
 		
 		let ageRanges = [
 			{
-				label: '0-10',
+				label: '0-16',
 				opacity: 1,
-				color: '#17FF17'
+				color: '#A0F1B7'
 			},
 			{
-				label: '11-20',
+				label: '16-32',
 				opacity: 1,
-				color: '#00E800'
+				color: '#BCFFCF'
 			},
 			{
-				label: '21-40',
+				label: '32-48',
 				opacity: 1,
-				color: '#00BA00'
+				color: '#F8D9E0'
 			},
 			{
-				label: '41-60',
+				label: '48-64',
 				opacity: 1,
-				color: '#008C00'
+				color: '#F6A7BA'
 			},
 			{
-				label: '61-80',
+				label: '64-80',
 				opacity: 1,
-				color: '#005D00'
+				color: '#FD7293'
 			},
 			{
 				label: '> 80',
 				opacity: 1,
-				color: '#002F00'
+				color: '#FF537C'
 			}
 		];
 		
@@ -176,21 +176,23 @@
 		function displayTotal() {
 			resetElements();
 			
-			map.selectAll('.death').attr('fill','red');
+			map.selectAll('.death').attr('fill','#072643');
 				
 			graph.select('#graphlinetotal')
-				.attr('stroke','red')
-				.attr('opacity','1');
+				.attr('stroke','#072643')
+				.attr('opacity','10');
 		}
 		
 		function displayGender() {
 			resetElements();
 			
-			map.selectAll('.male').attr('fill','blue');
-			map.selectAll('.female').attr('fill','magenta');
+			map.selectAll('.male').attr('fill','#FFF7AE');
+			map.selectAll('.female').attr('fill','#C7FFF1');
 			
-			graph.select('#graphlinegendermale').attr('stroke','blue');
-			graph.select('#graphlinegenderfemale').attr('stroke','magenta');
+			graph.select('#graphlinegendermale').attr('stroke','#FFEC43');
+			graph.select('#graphlinegendermale').attr('stroke-width','5px');
+			graph.select('#graphlinegenderfemale').attr('stroke','#74FFDE');
+			graph.select('#graphlinegendermale').attr('stroke-width','5px');
 			
 			graph.select('#buttongendermale').attr('visibility','visible');
 			graph.select('#buttongendermalelabel').attr('visibility','visible');
@@ -219,7 +221,7 @@
 				.data(deaths)
 				.enter()
 				.append('circle')
-				.attr('id', function(d,i) { return "death" + i; })
+				.attr('id', function(d) { return d.id; })
 				.attr('class', function(d) {
 					return "death " +
 						d.gender + " " +
@@ -229,12 +231,27 @@
 				.attr('cx', function(d) { return mapXScale(d.x); })
 				.attr('cy', function(d) { return mapYScale(d.y); })
 				.attr('fill','none')
-				.append("title")
+				.append("svg:title")
 				.text(function(d) {
 					return d.gender + "\r\n" +
 						"age " + ageRanges[d.age].label + "\r\n" +
 						"died " + d.deathdate;
-				});
+				})
+				
+			
+			map.selectAll('.death')
+				.on('mouseover', function(d){
+					// console.log(d3.select("#" + d.id).attr('r'))
+					d3.select(this)
+					.style('r', '10px')
+				}) 
+				.on('mouseout', function(d){
+					// console.log(d3.select("#" + d.id).attr('r'))
+					d3.select(this)
+					.style('r', '5px')
+				})
+
+			
 		}
 		
 		// Draw all the graph lines in advance.
@@ -349,7 +366,7 @@
 				.attr("y", graphHeight + buttonPadding)
 				.attr("width", buttonWidth)
 				.attr("height", buttonHeight)
-				.attr("fill", "red")
+				.attr("fill", "#072643")
 				.on('click', function(d) {
 					displayTotal();
 				});
@@ -372,19 +389,19 @@
 				.attr("y", graphHeight + buttonPadding)
 				.attr("width", buttonWidth)
 				.attr("height", buttonHeight)
-				.attr("fill", "blue")
+				.attr("fill", "#E7BFF4")
 				.on('click', function(d) {
 					displayGender();
 				});
 			graph.append('text')
 				.attr('id', 'buttongenderlabel')
 				.attr('class', 'graphbuttonlabel')
-				.text('By Gender')
+				.text('Gender')
 				.attr('x', buttonPadding * 2 + buttonWidth * 1.5)
 				.attr('y', graphHeight + buttonPadding + buttonHeight / 2 + 
 					buttonLabelYAdjust)
 				.attr('text-anchor','middle')
-				.attr('fill', 'white')
+				.attr('fill', '#072643')
 				.style('pointer-events','none');
 				
 			// By Age
@@ -395,7 +412,7 @@
 				.attr("y", graphHeight + buttonPadding)
 				.attr("width", buttonWidth)
 				.attr("height", buttonHeight)
-				.attr("fill", "green")
+				.attr("fill", "#FE7898")
 				.on('click', function(d) {
 					displayAge();
 				});
@@ -407,18 +424,18 @@
 				.attr('y', graphHeight + buttonPadding + buttonHeight / 2 + 
 					buttonLabelYAdjust)
 				.attr('text-anchor','middle')
-				.attr('fill', 'white')
+				.attr('fill', '#072643')
 				.style('pointer-events','none');
 				
 			// By Gender: Male Key
 			graph.append('rect')
 				.attr('id', 'buttongendermale')
 				.attr('class', 'graphbutton graphkeybutton male')
-				.attr("x", graphWidth - (keyButtonWidth + buttonPadding))
-				.attr("y", buttonPadding)
+				.attr("x", graphWidth - (keyButtonWidth + filterPadding))
+				.attr("y", filterPadding)
 				.attr("width", keyButtonWidth)
 				.attr("height", buttonHeight)
-				.attr("fill", "blue")
+				.attr("fill", "#FFF7AE")
 				.on('click', function(d) {
 					maleOpacity = (maleOpacity == 1 ? .2 : 1);
 					d3.selectAll('.male').attr('fill-opacity', maleOpacity);
@@ -428,22 +445,22 @@
 				.attr('id', 'buttongendermalelabel')
 				.attr('class', 'graphbuttonlabel graphkeybutton')
 				.text('Male')
-				.attr('x', graphWidth - (keyButtonWidth / 2 + buttonPadding))
-				.attr('y', buttonPadding + buttonHeight / 2 + 
+				.attr('x', graphWidth - (keyButtonWidth / 2 + filterPadding))
+				.attr('y', filterPadding + buttonHeight / 2 + 
 					buttonLabelYAdjust)
 				.attr('text-anchor','middle')
-				.attr('fill', 'white')
+				.attr('fill', '#072643')
 				.style('pointer-events','none');
 				
 			// By Gender: Female Key
 			graph.append('rect')
 				.attr('id', 'buttongenderfemale')
 				.attr('class', 'graphbutton graphkeybutton female')
-				.attr("x", graphWidth - (keyButtonWidth + buttonPadding))
-				.attr("y", buttonPadding * 2 + buttonHeight)
+				.attr("x", graphWidth - (keyButtonWidth + filterPadding))
+				.attr("y", filterPadding * 2 + buttonHeight)
 				.attr("width", keyButtonWidth)
 				.attr("height", buttonHeight)
-				.attr("fill", "magenta")
+				.attr("fill", "#C7FFF1")
 				.on('click', function(d) {
 					femaleOpacity = (femaleOpacity == 1 ? .2 : 1);
 					d3.selectAll('.female').attr('fill-opacity', femaleOpacity);
@@ -453,11 +470,11 @@
 				.attr('id', 'buttongenderfemalelabel')
 				.attr('class', 'graphbuttonlabel graphkeybutton')
 				.text('Female')
-				.attr('x', graphWidth - (keyButtonWidth / 2 + buttonPadding))
-				.attr('y', buttonPadding * 2 + buttonHeight * 1.5 + 
+				.attr('x', graphWidth - (keyButtonWidth / 2 + filterPadding))
+				.attr('y', filterPadding * 2 + buttonHeight * 1.5 + 
 					buttonLabelYAdjust)
 				.attr('text-anchor','middle')
-				.attr('fill', 'white')
+				.attr('fill', '#072643')
 				.style('pointer-events','none');
 
 			// By Age Key Buttons
@@ -465,8 +482,8 @@
 				graph.append('rect')
 					.attr('id', 'buttonage' + i)
 					.attr('class', 'graphbutton graphkeybutton age' + i)
-					.attr("x", graphWidth - (keyButtonWidth + buttonPadding))
-					.attr("y", buttonPadding * (i + 1) + buttonHeight * i)
+					.attr("x", graphWidth - (keyButtonWidth + filterPadding))
+					.attr("y", filterPadding * (i + 1) + buttonHeight * i)
 					.attr("width", keyButtonWidth)
 					.attr("height", buttonHeight)
 					.attr("fill", ageRanges[i].color)
@@ -481,8 +498,8 @@
 					.attr('id', 'buttonagelabel' + i)
 					.attr('class', 'graphbuttonlabel graphkeybutton')
 					.text(ageRanges[i].label)
-					.attr('x', graphWidth - (keyButtonWidth / 2 + buttonPadding))
-					.attr('y', buttonPadding * (i + 1) +
+					.attr('x', graphWidth - (keyButtonWidth / 2 + filterPadding))
+					.attr('y', filterPadding * (i + 1) +
 						buttonHeight * i + buttonHeight / 2 +
 						buttonLabelYAdjust)
 					.attr('text-anchor','middle')
@@ -504,7 +521,8 @@
 							x: data[i].x,
 							y: data[i].y,
 							age: +data[i].age,
-							gender: +data[i].gender==1 ? "female" : "male"
+							gender: +data[i].gender==1 ? "female" : "male",
+							id : "death"+(i+1)
 						}
 					);
 				}
@@ -572,7 +590,7 @@
 
 		// Load and draw the water pumps.
 		function drawPumps() {
-			const pumpSize = 8;
+			const pumpSize = 15;
 		
 			d3.csv("pumps.csv", function(data) {
 				for (let i=0; i < data.length; i++) {
@@ -594,7 +612,22 @@
 						return 'rotate(45 ' + 
 							mapXScale(d.x) + ' ' +
 							mapYScale(d.y) + ')';
-					});
+					})
+					.append("svg:title")
+					.text("Water Pump")
+				map.selectAll('.pump')
+				.on('mouseover', function(d){
+				// console.log(d3.select("#" + d.id).attr('r'))
+					d3.select(this)
+					.attr('width', 20)
+					.attr('height', 20)
+				}) 
+				.on('mouseout', function(d){
+					// console.log(d3.select("#" + d.id).attr('r'))
+					d3.select(this)
+					.attr('width', 15)
+					.attr('height', 15)
+				});
 			});
 		}
 		

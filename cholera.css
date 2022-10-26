@@ -1,28 +1,29 @@
 
 .pagetitle {
-	color: steelblue;
-	font-family: 'Alice', serif;
+	color: #072643;
+	font-family: 'Helvetica', serif;
 	font-size: 30px;
+	padding-top: 25px;
+	text-align: center;
+	margin-bottom: 0px;
 }
 
-.pagesubtitle {
-	color: black;
-	font-family: 'Alice', serif;
-	font-size: 15x;
-	font-weight: bold;
-}
 
 .pagetext {
-	
+	color: #072643;
+	font-family: 'Helvetica', serif;
+	font-size: 20px;
+	padding-left: 35px;
+	padding-right: 35px;
+	margin-top: 0px;
+	text-align: center;
 }
 
-.pagebutton {
-	background-color: steelblue;
-	color: white;
-	font-family: 'Arial';
-	font-size: 15px;
-	padding: 8px;
-	border: none;
-	border-radius: 5px;
-	cursor: pointer;
-}
+
+.rotated {
+	-webkit-transform: rotate(-90deg);
+	display: inline-block;
+	vertical-align : middle;
+	margin-top: -600px;
+	margin-right: -50px;
+  }
