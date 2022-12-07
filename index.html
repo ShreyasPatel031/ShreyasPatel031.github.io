@@ -15,6 +15,12 @@
 	<script src=
         "https://d3js.org/d3-scale-chromatic.v1.min.js">
     </script>
+	<script src=
+		"https://d3js.org/d3-color.v1.min.js">
+	</script>
+	<script src=
+		"https://d3js.org/d3-interpolate.v1.min.js">
+	</script>
 	<style>
 		#slider-container {
            position: relative;
@@ -93,18 +99,23 @@
 			<!-- <span class="rotated" >
 				<text id='label' x='5' y='20'>Deaths per day</text>
 			</span> -->
-			<div style="display:flex">
-				<div>
-					<svg id="graph"  width="570px" viewBox="0 0 500 400" padding="0 40px 0px 260px" preserveAspectRatio="xMidYMin slice" align-items="left"></svg>
+			<div style="display:flex" >
+				<div >
+					<svg id="graph"  width="570px" viewBox="-60 30 600 400" margin="0 -40px 0px -280px" ></svg>
 					<div id="slider-container" style="max-width:570px" margin="-15px 0 0 0"></div>
 				</div>
 				<div >
 					<div id="agePieChart" ></div>
 					<div id="sexPieChart" ></div>
 				</div>
-				<div>
-					<svg id="map" width="160%" viewBox="0 0 500 600" padding="0 0 0 100px"></svg>	
+				<div >
+					<svg id="map" width="180%" viewBox="0 0 500 600" padding="20px 0 0 100px"></svg>
 				</div>
+				<svg id="map_legend" height=290px width=380px ></svg>
+				<!-- <div width=10px height="100px" style="background-color:white" style="display:flex"> -->
+					
+				</div>
+				
 			</div>
 			
 		</div>
@@ -156,6 +167,14 @@
 		let startDate;
 		let endDate;
 
+		// map legend
+		var svg = d3.select("#map_legend")
+
+		// Handmade legend
+		svg.append("circle").attr("cx",200).attr("cy",130).attr("r", '5px').style("fill", "#072643")
+		svg.append("rect").attr("x",200).attr("y",160).attr("width", 15).attr("height", 15).attr("transform", 'rotate(45 215 155)' ).style("fill", "#404080")
+		svg.append("text").attr("x", 220).attr("y", 130).text("Deaths").style("font-size", "15px").attr("alignment-baseline","middle")
+		svg.append("text").attr("x", 220).attr("y", 160).text("Waterpump").style("font-size", "15px").attr("alignment-baseline","middle")
 
 		// set the dimensions and margins of the graph
 		var width = 250
@@ -188,6 +207,10 @@
 		var color2 = d3.scaleOrdinal()
 		.domain(['male','female'])
 		.range(d3.schemePastel2);
+
+		function ageColor( ageGroup ){
+			return d3.interpolateRdBu( ageGroup/5 );
+		}
 
 		slider.onChange(function(newRange){
 			// console.log(deathDays);
@@ -239,6 +262,7 @@
 		var polylinesAge
 		var labelsAge
 		var labelsPercent
+
 		function updateAgePie(data,svg,color) {
 			// console.log(data)
 			// Compute the position of each group on the pie:
@@ -267,7 +291,7 @@
 			.transition()
 			.duration(1000)
 			.attr('d', arc)
-			.attr('fill', function(d){ return(color(d.data.key)) })
+			.attr('fill', function(d){ return(ageColor(ageRanges.indexOf(d.data.key))) })
 			.attr("stroke", "white")
 			.style("stroke-width", "2px")
 			.style("opacity", 1)
@@ -451,31 +475,8 @@
 
 		}
 		
-		function resetElements() {
-			map.selectAll('.death')
-				.attr('fill','none')
-				.attr('fill-opacity', 1);
-				
-			graph.selectAll('.graphline')
-				.attr('stroke','none')
-				.attr('stroke-opacity',1);
-				
-			graph.selectAll('.graphkeybutton')
-				.attr('visibility','hidden')
-				.attr('fill-opacity', 1);
-				
-			maleOpacity = 1;
-			femaleOpacity = 1;
-			
-			for (let i=0; i < ageRanges.length; i++) {
-				ageRanges[i].opacity = 1;
-			}
-		}
 		
 		function displayTotal() {
-			resetElements();
-			
-			map.selectAll('.death').attr('fill','#072643');
 				
 			graph.select('#graphlinetotal') // graph line for total
 				.attr('stroke','#072643')
@@ -486,9 +487,7 @@
 		// Load the death data and add it to the map and the graph.
 		function loadDeaths() {
 		
-			// Load the coordinates and demographics for each death. These are
-			// assumed to be provided in the order in which the victim died, for
-			// purposes of correlating to deathdays.csv.
+
 			d3.csv("deaths_age_sex.csv", function(data) {
 				for (let i=0; i < data.length; i++) {
 					deaths.push( {
@@ -501,8 +500,6 @@
 					);
 				}
 				
-				// Load the number of deaths for each date, and update
-				// each death record with the day and date on which it occurred.
 				d3.csv("deathdays.csv", function(data) {
 					let deathId = 0;
 					for (let day = 0; day < data.length; day++) {
@@ -512,27 +509,20 @@
 						let femaleCount = 0;
 						let ageCount = [0,0,0,0,0,0];
 						
-						// Find the highest number of deaths on any day,
-						// to set the vertical scale.
+
 						if (maxDeaths < totalCount) {
 							maxDeaths = totalCount;
 						}
 						
 						for (let i=0; i < totalCount; i++) {
-							// Update the individual death records with the day
-							// and date of death.
 							deaths[deathId].deathday = day;
 							deaths[deathId].deathdate = data[day].date;
-							
-							// Count the deaths on each deathDay by demographic.
 							if (deaths[deathId].gender == "male") {
 								maleCount++;
 							} else {
 								femaleCount++;
 							}
 							ageCount[deaths[deathId].age]++;
-							
-							// Increment to the next individual death record.
 							deathId++;
 						}
 						
@@ -568,7 +558,6 @@
 				.append('circle')
 				.attr('id', function(d) { return d.id; })
 				.attr('class', function(d) { // assigning 
-					console.log('age',d.age)
 					return "death " +
 						d.gender + " " +
 						"age" + d.age + " " +
@@ -576,7 +565,7 @@
 				})
 				.attr('cx', function(d) { return mapXScale(d.x); })
 				.attr('cy', function(d) { return mapYScale(d.y); })
-				.attr('fill','none')
+				.attr('fill', '#072643' )
 				.append("svg:title")
 				.text(function(d) {
 					return d.gender + "\r\n" +
@@ -600,12 +589,11 @@
 			
 		}
 		
-		// Draw all the graph lines in advance.
+		// Draw all the graph lines
 		function drawDeathsGraphLines() {
 			let graphTotalPathGenerator = d3.line()
 				.x(function(d) { return graphXScale(d.day); })
 				.y(function(d) { return graphYScale(d.total); });
-			// console.log("path",graphTotalPathGenerator.x)
 			graph.append('path')
 				.attr('id', 'graphlinetotal')
 				.attr('class', 'graphline')
@@ -617,10 +605,7 @@
 		// Draw the overall structure of the graph.
 		function drawDeathsGraph() {
 
-			// Create hover bars
 			let hoverbarWidth = graphWidth / (deathDays.length - 1);
-			// console.log("draw deaths")
-			// console.log(slider.range())
 
 			graph.selectAll("rect.deathhoverbar")
 				.data(deathDays)
@@ -662,15 +647,21 @@
 			
 			graph.append("text")
 				.attr("text-anchor", "end")
-				.attr("transform", "rotate(-90)")
-				.attr("y", -margin.left+20)
-				.attr("x", -margin.top)
-				.text("Y axis title")
+				.attr("transform", "rotate(-90 90 100)")
+				.attr("y", -margin.left+120)
+				.attr("x", -margin.top+20)
+				.text("Deaths")
+
+			graph.append("text")
+				.attr("text-anchor", "end")
+				.attr("x", graphWidth - 200)
+				.attr("y", 410 )
+				.text("Dates");
 			
 
 		}		
 		
-		// Load and draw the water pumps.
+		// Draw the water pumps.
 		function drawPumps() {
 			const pumpSize = 15;
 		
@@ -743,13 +734,11 @@
 			});
 		}
 		
-		// Provide a means of drawing the map lines at scale.
 		let lineFunction = d3.line()
 			.x(function(d) { return mapXScale(d.x); })
 			.y(function(d) { return mapYScale(d.y); })
 			.curve(d3.curveLinear);
 		
-		// Start the process by loading and drawing the map.
 		d3.json("streets.json", function(data) {
 			streets = data;
 		
